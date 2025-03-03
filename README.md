@@ -24,7 +24,7 @@ Star Connect Backend is a Node.js backend application featuring JWT-based authen
 
 ## **Installation**
 
-1. **Clone the Repository:**  
+**1\. **Clone the Repository:**  
    Open your terminal and run:
 
    `git clone https://github.com/yourusername/star-connect-backend.git`
