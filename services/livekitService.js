@@ -1,0 +1,17 @@
+const { AccessToken } = require('livekit-server-sdk');
+require('dotenv').config();
+
+// Replace these with your actual LiveKit API key and secret
+const API_KEY = process.env.LIVEKIT_API_KEY || "YOUR_LIVEKIT_API_KEY";
+const API_SECRET = process.env.LIVEKIT_API_SECRET || "YOUR_LIVEKIT_API_SECRET";
+
+// Function to generate a LiveKit token for a given room and identity
+exports.generateToken = (room, identity) => {
+  try {
+    const at = new AccessToken(API_KEY, API_SECRET, { identity, ttl: '1h' });
+    at.addGrant({ room });
+    return at.toJwt();
+  } catch (error) {
+    throw new Error("Error generating LiveKit token: " + error.message);
+  }
+};

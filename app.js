@@ -15,6 +15,7 @@ app.set('views', path.join(__dirname, 'views'));
 // Import route groups and middlewares
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
+const livekitRoutes = require('./routes/livekitRoutes');
 const authenticateToken = require('./middlewares/auth');
 const logger = require('./middlewares/logger');
 
@@ -36,11 +37,12 @@ app.get('/home', (req, res) => {
 // Serve static files on /static route (e.g., index.html)
 app.use('/static', express.static(path.join(__dirname, 'public')));
 
-// Route groups for authentication and protected routes
+// Route groups for authentication, LiveKit token generation, and protected routes
 app.use('/auth', authRoutes);
+app.use('/livekit', livekitRoutes);
 app.use('/user', authenticateToken, userRoutes);
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 3000;
 
 // Conditional server creation: HTTPS if cert files exist, otherwise HTTP
 const certPath = path.join(__dirname, 'cert', 'server.cert');
