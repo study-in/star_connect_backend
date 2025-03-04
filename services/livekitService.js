@@ -1,7 +1,7 @@
 const { AccessToken } = require('livekit-server-sdk');
 require('dotenv').config();
 
-// Replace these with your actual LiveKit API key and secret
+// Using provided LiveKit API key and secret from the .env file
 const API_KEY = process.env.LIVEKIT_API_KEY || "YOUR_LIVEKIT_API_KEY";
 const API_SECRET = process.env.LIVEKIT_API_SECRET || "YOUR_LIVEKIT_API_SECRET";
 
