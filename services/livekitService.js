@@ -9,7 +9,11 @@ const API_SECRET = process.env.LIVEKIT_API_SECRET || "YOUR_LIVEKIT_API_SECRET";
 exports.generateToken = (room, identity) => {
   try {
     const at = new AccessToken(API_KEY, API_SECRET, { identity, ttl: '1h' });
-    at.addGrant({ room });
+    at.addGrant({ 
+      roomJoin: true,
+      room: room,
+      canUpdateOwnMetadata: true, 
+    });
     return at.toJwt();
   } catch (error) {
     throw new Error("Error generating LiveKit token: " + error.message);
