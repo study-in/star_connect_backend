@@ -1,10 +1,11 @@
-require('dotenv').config();
-require('./db'); // Connect to MongoDB
-const express = require('express');
-const path = require('path');
-const cors = require('cors');
-const fs = require('fs');
-const http = require('http');
+import dotenv from 'dotenv';
+dotenv.config();
+import './db'; // Connect to MongoDB
+import express from 'express';
+import path from 'path';
+import cors from 'cors';
+import fs from 'fs';
+import http from 'http';
 
 const app = express();
 
@@ -13,11 +14,11 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 // Import route groups and middlewares
-const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/userRoutes');
-const livekitRoutes = require('./routes/livekitRoutes');
-const authenticateToken = require('./middlewares/auth');
-const logger = require('./middlewares/logger');
+import authRoutes from './routes/authRoutes';
+import userRoutes from './routes/userRoutes';
+import livekitRoutes from './routes/livekitRoutes';
+import authenticateToken from './middlewares/auth';
+import logger from './middlewares/logger';
 
 // Middlewares
 app.use(express.json());
