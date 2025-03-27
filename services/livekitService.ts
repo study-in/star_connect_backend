@@ -5,7 +5,6 @@ dotenv.config();
 const API_KEY = process.env.LIVEKIT_API_KEY || "YOUR_LIVEKIT_API_KEY";
 const API_SECRET = process.env.LIVEKIT_API_SECRET || "YOUR_LIVEKIT_API_SECRET";
 
-// Function to generate a LiveKit token for a given room and identity
 export const generateToken = (room: string, identity: string): string => {
   try {
     const at = new AccessToken(API_KEY, API_SECRET, { identity, ttl: '1h' });

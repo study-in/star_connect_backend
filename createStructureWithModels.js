@@ -82,10 +82,8 @@ export const loginUser = async (username: string, password: string): Promise<str
   
   // Retrieve TOKEN_EXPIRATION from environment; default to "1h"
   const expirationValue: string = process.env.TOKEN_EXPIRATION || "1h";
-  // Cast ms to a function that accepts a string and returns a number.
   const msFn = ms as unknown as (value: string) => number;
   const expirationMs: number = msFn(expirationValue);
-  // Convert milliseconds to seconds (jsonwebtoken expects seconds when a number is provided)
   const expirationSeconds: number = expirationMs / 1000;
   
   const signOptions: SignOptions = { expiresIn: expirationSeconds };
@@ -291,7 +289,7 @@ const logger = (req: Request, res: Response, next: NextFunction): void => {
 export default logger;
 `
   },
-  // db.ts - Database connection file (updated for Mongoose 7)
+  // db.ts - Database connection file (using Mongoose)
   {
     filePath: 'db.ts',
     content: `import mongoose from 'mongoose';
@@ -454,10 +452,294 @@ LIVEKIT_API_SECRET=ukOpIrNfL66FQPuoqMXsBo2Gh2KDgvjrbLJbYZbPZOP
   </body>
 </html>
 `
+  },
+  // ----- Updated Model Schemas in Mongoose -----
+  // models/User.ts
+  {
+    filePath: path.join('models', 'User.ts'),
+    content: `import mongoose, { Schema, Document } from 'mongoose';
+
+export interface IUser extends Document {
+  name: string;
+  email: string;
+  password_hash: string;
+  role: string;
+  phone?: string;
+  created_at: Date;
+  updated_at: Date;
+}
+
+const UserSchema: Schema = new Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password_hash: { type: String, required: true },
+  role: { type: String, required: true },
+  phone: { type: String },
+  created_at: { type: Date, default: Date.now },
+  updated_at: { type: Date, default: Date.now }
+});
+
+export default mongoose.model<IUser>('User', UserSchema);
+`
+  },
+  // models/ExpertProfile.ts
+  {
+    filePath: path.join('models', 'ExpertProfile.ts'),
+    content: `import mongoose, { Schema, Document } from 'mongoose';
+
+export interface IExpertProfile extends Document {
+  user_id: mongoose.Types.ObjectId;
+  bio?: string;
+  expertise?: string;
+  qualifications?: string;
+  pricing?: number;
+  availability?: any;
+  bank_details?: any;
+  verified: boolean;
+  created_at: Date;
+  updated_at: Date;
+}
+
+const ExpertProfileSchema: Schema = new Schema({
+  user_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  bio: { type: String },
+  expertise: { type: String },
+  qualifications: { type: String },
+  pricing: { type: Number },
+  availability: { type: Schema.Types.Mixed },
+  bank_details: { type: Schema.Types.Mixed },
+  verified: { type: Boolean, default: false },
+  created_at: { type: Date, default: Date.now },
+  updated_at: { type: Date, default: Date.now }
+});
+
+export default mongoose.model<IExpertProfile>('ExpertProfile', ExpertProfileSchema);
+`
+  },
+  // models/Appointment.ts
+  {
+    filePath: path.join('models', 'Appointment.ts'),
+    content: `import mongoose, { Schema, Document } from 'mongoose';
+
+export interface IAppointment extends Document {
+  user_id: mongoose.Types.ObjectId;
+  expert_id: mongoose.Types.ObjectId;
+  call_type: string;
+  subject?: string;
+  duration?: number;
+  scheduled_at?: Date;
+  status?: string;
+  livekit_room_id?: string;
+  livekit_token?: string;
+  call_status?: string;
+  group_details?: any;
+  created_at: Date;
+  updated_at: Date;
+}
+
+const AppointmentSchema: Schema = new Schema({
+  user_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  expert_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  call_type: { type: String, required: true },
+  subject: { type: String },
+  duration: { type: Number },
+  scheduled_at: { type: Date },
+  status: { type: String },
+  livekit_room_id: { type: String },
+  livekit_token: { type: String },
+  call_status: { type: String },
+  group_details: { type: Schema.Types.Mixed },
+  created_at: { type: Date, default: Date.now },
+  updated_at: { type: Date, default: Date.now }
+});
+
+export default mongoose.model<IAppointment>('Appointment', AppointmentSchema);
+`
+  },
+  // models/Message.ts
+  {
+    filePath: path.join('models', 'Message.ts'),
+    content: `import mongoose, { Schema, Document } from 'mongoose';
+
+export interface IMessage extends Document {
+  sender_id: mongoose.Types.ObjectId;
+  receiver_id: mongoose.Types.ObjectId;
+  content: string;
+  message_type: string;
+  status?: string;
+  livekit_flag?: boolean;
+  created_at: Date;
+  updated_at: Date;
+}
+
+const MessageSchema: Schema = new Schema({
+  sender_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  receiver_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  content: { type: String, required: true },
+  message_type: { type: String, required: true },
+  status: { type: String },
+  livekit_flag: { type: Boolean, default: false },
+  created_at: { type: Date, default: Date.now },
+  updated_at: { type: Date, default: Date.now }
+});
+
+export default mongoose.model<IMessage>('Message', MessageSchema);
+`
+  },
+  // models/StarWishOrder.ts
+  {
+    filePath: path.join('models', 'StarWishOrder.ts'),
+    content: `import mongoose, { Schema, Document } from 'mongoose';
+
+export interface IStarWishOrder extends Document {
+  user_id: mongoose.Types.ObjectId;
+  expert_id: mongoose.Types.ObjectId;
+  recipient_name: string;
+  recipient_email: string;
+  video_type: string;
+  instructions?: string;
+  tone?: string;
+  video_length?: number;
+  privacy?: string;
+  delivery_time?: string;
+  status?: string;
+  created_at: Date;
+  updated_at: Date;
+}
+
+const StarWishOrderSchema: Schema = new Schema({
+  user_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  expert_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  recipient_name: { type: String, required: true },
+  recipient_email: { type: String, required: true },
+  video_type: { type: String, required: true },
+  instructions: { type: String },
+  tone: { type: String },
+  video_length: { type: Number },
+  privacy: { type: String },
+  delivery_time: { type: String },
+  status: { type: String },
+  created_at: { type: Date, default: Date.now },
+  updated_at: { type: Date, default: Date.now }
+});
+
+export default mongoose.model<IStarWishOrder>('StarWishOrder', StarWishOrderSchema);
+`
+  },
+  // models/PaymentTransaction.ts
+  {
+    filePath: path.join('models', 'PaymentTransaction.ts'),
+    content: `import mongoose, { Schema, Document } from 'mongoose';
+
+export interface IPaymentTransaction extends Document {
+  user_id: mongoose.Types.ObjectId;
+  expert_id?: mongoose.Types.ObjectId;
+  amount: number;
+  payment_method: string;
+  transaction_type: string;
+  status?: string;
+  sslcommerz_transaction_id?: string;
+  sslcommerz_response?: any;
+  payment_verified_at?: Date;
+  created_at: Date;
+  updated_at: Date;
+}
+
+const PaymentTransactionSchema: Schema = new Schema({
+  user_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  expert_id: { type: Schema.Types.ObjectId, ref: 'User' },
+  amount: { type: Number, required: true },
+  payment_method: { type: String, required: true },
+  transaction_type: { type: String, required: true },
+  status: { type: String },
+  sslcommerz_transaction_id: { type: String },
+  sslcommerz_response: { type: Schema.Types.Mixed },
+  payment_verified_at: { type: Date },
+  created_at: { type: Date, default: Date.now },
+  updated_at: { type: Date, default: Date.now }
+});
+
+export default mongoose.model<IPaymentTransaction>('PaymentTransaction', PaymentTransactionSchema);
+`
+  },
+  // models/PromoCode.ts
+  {
+    filePath: path.join('models', 'PromoCode.ts'),
+    content: `import mongoose, { Schema, Document } from 'mongoose';
+
+export interface IPromoCode extends Document {
+  code: string;
+  discount_type: string;
+  discount_value: number;
+  applicable_to: string;
+  expiry_date?: Date;
+  created_at: Date;
+}
+
+const PromoCodeSchema: Schema = new Schema({
+  code: { type: String, required: true, unique: true },
+  discount_type: { type: String, required: true },
+  discount_value: { type: Number, required: true },
+  applicable_to: { type: String },
+  expiry_date: { type: Date },
+  created_at: { type: Date, default: Date.now }
+});
+
+export default mongoose.model<IPromoCode>('PromoCode', PromoCodeSchema);
+`
+  },
+  // models/Referral.ts
+  {
+    filePath: path.join('models', 'Referral.ts'),
+    content: `import mongoose, { Schema, Document } from 'mongoose';
+
+export interface IReferral extends Document {
+  referrer_id: mongoose.Types.ObjectId;
+  referred_id: mongoose.Types.ObjectId;
+  credit_awarded: number;
+  status?: string;
+  created_at: Date;
+}
+
+const ReferralSchema: Schema = new Schema({
+  referrer_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  referred_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  credit_awarded: { type: Number, required: true },
+  status: { type: String },
+  created_at: { type: Date, default: Date.now }
+});
+
+export default mongoose.model<IReferral>('Referral', ReferralSchema);
+`
+  },
+  // models/Review.ts
+  {
+    filePath: path.join('models', 'Review.ts'),
+    content: `import mongoose, { Schema, Document } from 'mongoose';
+
+export interface IReview extends Document {
+  expert_id: mongoose.Types.ObjectId;
+  user_id: mongoose.Types.ObjectId;
+  rating: number;
+  comment?: string;
+  created_at: Date;
+  updated_at: Date;
+}
+
+const ReviewSchema: Schema = new Schema({
+  expert_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  user_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  rating: { type: Number, required: true },
+  comment: { type: String },
+  created_at: { type: Date, default: Date.now },
+  updated_at: { type: Date, default: Date.now }
+});
+
+export default mongoose.model<IReview>('Review', ReviewSchema);
+`
   }
 ];
 
-// Create each sample file if it doesn't exist
 sampleFiles.forEach((item) => {
   const filePath = path.join(process.cwd(), item.filePath);
   if (!fs.existsSync(filePath)) {

@@ -28,13 +28,10 @@ export const loginUser = async (username: string, password: string): Promise<str
     throw new Error('Invalid credentials');
   }
   
-  // Get TOKEN_EXPIRATION from environment; default to "1h"
+  // Retrieve TOKEN_EXPIRATION from environment; default to "1h"
   const expirationValue: string = process.env.TOKEN_EXPIRATION || "1h";
-  
-  // Cast ms to a function that accepts a string and returns a number.
   const msFn = ms as unknown as (value: string) => number;
   const expirationMs: number = msFn(expirationValue);
-  // Convert milliseconds to seconds (jwt.sign expects seconds if a number is provided)
   const expirationSeconds: number = expirationMs / 1000;
   
   const signOptions: SignOptions = { expiresIn: expirationSeconds };
