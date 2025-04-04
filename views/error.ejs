@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error</title>
+     <link rel="stylesheet" href="/static/stylesheets/style.css">
+     <style>
+        .error-stack {
+            background-color: #eee;
+            padding: 10px;
+            border-radius: 5px;
+            white-space: pre-wrap; /* Preserve formatting */
+            word-wrap: break-word; /* Wrap long lines */
+            font-family: monospace;
+            font-size: 0.9em;
+            margin-top: 20px;
+        }
+     </style>
+  </head>
+  <body>
+    <h1>Oops! Something went wrong.</h1>
+    <% if (message) { %>
+        <p><strong>Message:</strong> <%= message %></p>
+    <% } else { %>
+        <p>An unexpected error occurred. Please try again later.</p>
+    <% } %>
+
+    <%# Show stack trace only in development environment %>
+    <% if (process.env.NODE_ENV === 'development' && error && error.stack) { %>
+      <h2>Developer Info (Stack Trace):</h2>
+      <pre class="error-stack"><%= error.stack %></pre>
+    <% } %>
+  </body>
+</html>
