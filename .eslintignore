@@ -1,0 +1,10 @@
+node_modules
+dist
+coverage
+logs
+cert
+*.md
+*.yaml
+*.yml
+*.json
+*.js

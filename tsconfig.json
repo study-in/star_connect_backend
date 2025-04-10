@@ -1,17 +1,42 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true
+    /* Base Options */
+    "esModuleInterop": true, // Enables compatibility with CommonJS modules
+    "skipLibCheck": true, // Skip type checking of declaration files
+    "target": "ES2020", // Target modern ECMAScript version
+    "allowJs": true, // Allow JavaScript files to be compiled
+    "resolveJsonModule": true, // Allow importing JSON modules
+    "moduleDetection": "force", // Treat files lacking imports/exports as modules
+    "isolatedModules": true, // Ensure files can be safely transpiled without relying on other imports
+    "verbatimModuleSyntax": false, // Use default module syntax transformation
+
+    /* Strictness */
+    "strict": true, // Enable all strict type-checking options
+    "noUncheckedIndexedAccess": true, // Add 'undefined' to types accessed via index signature
+    "noImplicitOverride": true, // Ensure overriding members are marked with 'override'
+
+    /* Bundled Libraries */
+    // "lib": ["ESNext"], // Specify library files (ESNext usually includes latest features)
+
+    /* Modules */
+    "module": "NodeNext", // Use Node.js native ECMAScript modules
+    "moduleResolution": "NodeNext", // Use Node.js module resolution strategy
+    // "baseUrl": "./", // Base directory for non-relative module names
+    // "paths": {}, // Path mapping if needed
+    // "rootDirs": ["./src"], // Treat 'src' as root
+
+    /* Emit */
+    "outDir": "./dist", // Output directory for compiled files
+    "sourceMap": true, // Generate source maps for debugging
+    // "declaration": true, // Generate corresponding '.d.ts' files
+    // "declarationMap": true, // Generate source maps for '.d.ts' files
+
+    /* Type Checking */
+    "forceConsistentCasingInFileNames": true, // Disallow inconsistently-cased references
+
+    /* Completeness */
+    // "skipDefaultLibCheck": true, // Skip type checking default library declaration files
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": ["src/**/*.ts", "src/interfaces/**/*.d.ts"], // Include all TS files in src and global type definitions
+  "exclude": ["node_modules", "dist"] // Exclude node_modules and dist folders
 }

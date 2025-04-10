@@ -1,36 +1,76 @@
 {
-  "name": "star-connect-backend-ts",
+  "name": "star_connect_backend",
   "version": "1.0.0",
-  "description": "A Node.js backend with JWT authentication for Star Connect (TypeScript)",
-  "main": "dist/app.js",
+  "description": "A Node.js backend for Star Connect (TypeScript, Modular)",
+  "main": "dist/server.js", // Entry point should be server.ts
+  "type": "module", // Important for NodeNext module system
   "scripts": {
     "build": "tsc",
-    "start": "node dist/app.js",
-    "dev": "ts-node-dev --respawn --transpile-only src/app.ts"
+    "start": "node dist/server.js",
+    "dev": "ts-node-dev --respawn --transpile-only --exit-child --watch src src/server.ts", // Use server.ts as entry
+    "lint": "eslint . --ext .ts --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "prettier": "prettier --check ./src",
+    "prettier:fix": "prettier --write ./src",
+    "test": "echo \"Error: no test specified\" && exit 1"
+    // Add production start script e.g., using pm2
+    // "start:prod": "pm2 start dist/server.js -i max --name star_connect_backend"
   },
-  "keywords": [],
+  "keywords": ["nodejs", "typescript", "express", "mongodb", "livekit", "sslcommerz", "jwt"],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "colors": "^1.4.0", // For colored console logs (used in server.ts example)
+    "compression": "^1.7.4",
+    "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
-    "dotenv": "^16.0.0",
-    "express": "^4.18.2",
-    "jsonwebtoken": "^9.0.0",
-    "mongoose": "^7.0.0",
+    "dotenv": "^16.4.5", // Updated version
     "ejs": "^3.1.9",
-    "livekit-server-sdk": "^1.2.7",
-    "ms": "^2.1.3"
+    "express": "^4.18.2", // Stable version
+    "express-rate-limit": "^7.2.0", // Updated version
+    "helmet": "^7.1.0", // Updated version
+    "http-status": "^1.7.3", // Updated version
+    "jsonwebtoken": "^9.0.2", // Updated version
+    "livekit-server-sdk": "^1.2.7", // Keep existing
+    "mongoose": "^8.1.1", // Updated version
+    "ms": "^2.1.3", // Keep existing
+    "nodemailer": "^6.9.9", // For sending emails
+    "os-utils": "^0.0.14", // For server monitor
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.0", // Updated version
+    "winston": "^3.11.0", // Updated version
+    "winston-daily-rotate-file": "^4.7.1", // Keep existing
+    "zod": "^3.22.4" // For validation
+    // Add other specific dependencies like axios or node-fetch if needed for SSLCommerz
   },
   "devDependencies": {
-    "ts-node": "^10.9.1",
-    "ts-node-dev": "^2.0.0",
-    "typescript": "^5.0.0",
-    "@types/express": "^4.17.17",
-    "@types/node": "^20.2.5",
-    "@types/cors": "^2.8.12",
-    "@types/jsonwebtoken": "^9.0.1",
-    "@types/bcryptjs": "^2.4.2",
-    "@types/ms": "^0.7.31"
-  }
+    "@types/bcryptjs": "^2.4.6", // Updated version
+    "@types/compression": "^1.7.5",
+    "@types/cookie-parser": "^1.4.6", // Updated version
+    "@types/cors": "^2.8.17", // Updated version
+    "@types/ejs": "^3.1.5",
+    "@types/express": "^4.17.21",
+    "@types/http-status": "^1.5.0",
+    "@types/jsonwebtoken": "^9.0.5", // Updated version
+    "@types/ms": "^0.7.34", // Updated version
+    "@types/node": "^20.11.16", // Use specific LTS version
+    "@types/nodemailer": "^6.4.14", // Updated version
+    "@types/os-utils": "^0.0.4",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.6",
+    "@typescript-eslint/eslint-plugin": "^6.21.0", // Updated version
+    "@typescript-eslint/parser": "^6.21.0", // Updated version
+    "eslint": "^8.56.0", // Updated version
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.1.3",
+    "nodemon": "^3.1.7", // Added for potential alternative dev script
+    "prettier": "^3.2.4", // Updated version
+    "ts-node": "^10.9.2", // Updated version
+    "ts-node-dev": "^2.0.0", // Keep existing
+    "typescript": "^5.3.3" // Updated version
+  },
+   "engines": {
+     "node": ">=18.0.0" // Specify minimum Node.js version
+   }
 }

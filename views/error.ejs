@@ -1,35 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Error</title>
-     <link rel="stylesheet" href="/static/stylesheets/style.css">
-     <style>
-        .error-stack {
-            background-color: #eee;
-            padding: 10px;
-            border-radius: 5px;
-            white-space: pre-wrap; /* Preserve formatting */
-            word-wrap: break-word; /* Wrap long lines */
-            font-family: monospace;
-            font-size: 0.9em;
-            margin-top: 20px;
-        }
-     </style>
-  </head>
-  <body>
-    <h1>Oops! Something went wrong.</h1>
-    <% if (message) { %>
-        <p><strong>Message:</strong> <%= message %></p>
-    <% } else { %>
-        <p>An unexpected error occurred. Please try again later.</p>
-    <% } %>
+ <head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Error</title>
+   <link rel="stylesheet" href="/static/stylesheets/style.css">
+   <style>
+     .error-details { margin-top: 20px; background-color: #ffebee; border: 1px solid #e57373; padding: 15px; border-radius: 5px; }
+     .error-stack { background-color: #f1f1f1; padding: 10px; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word; font-family: monospace; font-size: 0.9em; margin-top: 15px; max-height: 400px; overflow-y: auto; }
+     strong { color: #c62828; }
+   </style>
+ </head>
+ <body>
+   <h1>Oops! Something Went Wrong</h1>
+    <div class="error-details">
+        <% if (message) { %>
+            <p><strong>Error Message:</strong> <%= message %></p>
+        <% } else { %>
+            <p>An unexpected error occurred. Please try again later.</p>
+        <% } %>
 
-    <%# Show stack trace only in development environment %>
-    <% if (process.env.NODE_ENV === 'development' && error && error.stack) { %>
-      <h2>Developer Info (Stack Trace):</h2>
-      <pre class="error-stack"><%= error.stack %></pre>
-    <% } %>
-  </body>
+        <%# Show stack trace and error object only in development environment %>
+        <% if (env === 'development' && error) { %>
+            <% if (error.statusCode) { %><p><strong>Status Code:</strong> <%= error.statusCode %></p><% } %>
+            <% if (error.status) { %><p><strong>Status:</strong> <%= error.status %></p><% } %>
+            <% if (error.isOperational !== undefined) { %><p><strong>Operational:</strong> <%= error.isOperational %></p><% } %>
+            <% if (error.stack) { %>
+                <h2>Developer Info (Stack Trace):</h2>
+                <pre class="error-stack"><%= error.stack %></pre>
+            <% } %>
+             <h2>Full Error Object (Dev Only):</h2>
+             <pre class="error-stack"><%= JSON.stringify(error, null, 2) %></pre>
+        <% } %>
+   </div>
+   <p><a href="/">Go back to Home/Monitor</a></p>
+ </body>
 </html>

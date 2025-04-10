@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome</title>
-     <link rel="stylesheet" href="/static/stylesheets/style.css"> </head>
-  <body>
-    <h1>Welcome to the Star Connect Backend!</h1>
-    <p>This is a dynamic page rendered using EJS on the server.</p>
-    <p>Current Time (Server): <%= new Date().toLocaleTimeString() %></p> <%# Example EJS usage %>
-  </body>
+ <head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Welcome</title>
+   <link rel="stylesheet" href="/static/stylesheets/style.css"> </head>
+ <body>
+   <h1>Welcome to the star_connect_backend Backend!</h1>
+   <p>This is a dynamic page rendered using EJS on the server.</p>
+   <p>Current Server Time: <%= new Date().toLocaleTimeString() %></p>
+   <p><a href="/">View Server Monitor</a></p>
+   <p><a href="/api-docs">View API Docs (Swagger)</a></p>
+ </body>
 </html>

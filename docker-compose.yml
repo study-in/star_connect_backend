@@ -1,0 +1,59 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  app:
+    container_name: star_connect_backend-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # Optionally define build args for different stages if needed
+      # target: production # Build only the production stage
+    ports:
+      # Map host port (left) to container port (right, from .env)
+      - "${PORT:-3000}:${PORT:-3000}"
+    env_file:
+      - .env # Load environment variables from .env file
+    volumes:
+      # --- Development Volumes (Comment out/remove for production builds) ---
+      # Mount source code for live reload (use if running dev server in container)
+      # - ./src:/app/src
+      # Mount logs for persistence/inspection on host
+      - ./logs:/app/logs
+      # Mount certs if managing them on the host
+      # - ./cert:/app/cert
+      # Named volume for node_modules to avoid overwriting container modules in dev
+      # - node_modules:/app/node_modules
+      # --- Production Volumes (Optional) ---
+      # You might mount logs or persistent data dirs in production too
+    # command: npm run dev # Use dev command for development override
+    restart: unless-stopped # Restart policy for production
+    networks:
+      - app-network # Connect to a custom network
+
+  # Optional: Add MongoDB service if running locally with Docker
+  mongo:
+    container_name: star_connect_backend-mongo
+    image: mongo:latest # Or specify a version like mongo:6.0
+    ports:
+      - "27017:27017" # Default MongoDB port
+    volumes:
+      - mongo-data:/data/db # Persist database data using a named volume
+    environment:
+      # Set root username/password if needed for MongoDB auth
+      # MONGO_INITDB_ROOT_USERNAME: your_mongo_user
+      # MONGO_INITDB_ROOT_PASSWORD: your_mongo_password
+      MONGO_INITDB_DATABASE: star_connect_backend # Automatically creates this DB
+    networks:
+      - app-network
+    restart: unless-stopped
+
+# Define custom network
+networks:
+  app-network:
+    driver: bridge
+
+# Define named volumes
+volumes:
+  mongo-data: # Volume for MongoDB data persistence
+  # node_modules: # Named volume for development node_modules caching

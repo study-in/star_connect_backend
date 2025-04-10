@@ -1,19 +1,18 @@
 // src/utils/catchAsync.ts
-import { Request, Response, NextFunction } from 'express';
-
-// Define a type for async middleware functions
-type AsyncMiddleware = (req: Request, res: Response, next: NextFunction) => Promise<any>;
+import { Request, Response, NextFunction, RequestHandler } from 'express';
 
 /**
- * Wraps an async middleware function to catch any errors and pass them
- * to the Express error handling middleware (via next(err)).
- * @param fn The async middleware function to wrap.
- * @returns A standard Express middleware function.
+ * Wraps an async route handler or middleware function to catch any promise rejections
+ * and pass them to the Express global error handler (via next(err)).
+ *
+ * @param fn The async RequestHandler function to wrap.
+ * @returns A standard Express RequestHandler function.
  */
-const catchAsync = (fn: AsyncMiddleware) => {
-    return (req: Request, res: Response, next: NextFunction) => {
-        fn(req, res, next).catch(next); // Catches promise rejections and passes error to next()
-    };
+const catchAsync = (fn: RequestHandler): RequestHandler => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    // Ensure the function call is awaited and errors are caught
+    Promise.resolve(fn(req, res, next)).catch((err) => next(err));
+  };
 };
 
 export default catchAsync;

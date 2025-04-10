@@ -1,172 +1,128 @@
 // src/app.ts
 import dotenv from 'dotenv';
 dotenv.config(); // Load .env variables MUST BE FIRST
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Express, Request, Response, NextFunction } from 'express';
 import path from 'path';
+import { fileURLToPath } from 'url'; // Needed for __dirname in ES modules
 import cors from 'cors';
-import fs from 'fs';
-import http from 'http';
-import https from 'https'; // Import https
-import mongoose from 'mongoose'; // <-- ADDED IMPORT
-import connectDB from './db'; // Import DB connection function
-import logger from './middlewares/logger.middleware'; // Import logger
-import globalErrorHandler from './middlewares/error.middleware'; // Import global error handler
-import AppError from './utils/AppError'; // Import AppError
+import cookieParser from 'cookie-parser';
+import compression from 'compression';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import httpStatus from 'http-status';
+import swaggerUi from 'swagger-ui-express';
 
-// --- Connect to Database ---
-connectDB();
+import globalErrorHandler from './app/middlewares/globalErrorHandler.js'; // Use .js extension
+import apiNotFoundHandler from './app/middlewares/apiNotFoundHandler.js'; // Use .js extension
+import config from './config/index.js'; // Use .js extension
+import { swaggerSpec } from './utils/swagger.js'; // Use .js extension
+import mainApiRouter from './app/routes/index.js'; // Use .js extension
+import { logger as requestLogger } from './shared/logger.js'; // Use .js extension for request logging
+import serverMonitorPage from './utils/serverMonitor.js'; // Use .js extension
 
-const app = express();
+// ES Module equivalents for __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// --- View Engine Setup ---
-app.set('view engine', 'ejs');
-// Use path.resolve to ensure correct path regardless of where script is run
-app.set('views', path.resolve(process.cwd(), 'views')); // Points to views folder in project root
+const app: Express = express();
 
-// --- Middlewares ---
-// Enable CORS - Configure origins properly for production
-app.use(cors());
-// Or configure specific origins:
-// app.use(cors({ origin: process.env.FRONTEND_URL }));
+// --- Security Middleware ---
+// Enable CORS
+const corsOptions = {
+  origin: config.allowed_origins ? config.allowed_origins.split(',') : true, // Allow specified origins or all if not set
+  credentials: true, // Allow cookies, authorization headers, etc.
+};
+app.use(cors(corsOptions));
 
-// Body parsers
-app.use(express.json({ limit: '10kb' })); // Parse JSON bodies (limit size)
-app.use(express.urlencoded({ extended: true, limit: '10kb' })); // Parse URL-encoded bodies
+// Helmet for setting various security headers
+app.use(helmet());
 
-// Request Logger
-app.use(logger);
-
-// --- Static Files ---
-// Serve static files from 'public' directory
-app.use('/static', express.static(path.resolve(process.cwd(), 'public')));
-
-// --- Routes ---
-import authRoutes from './routes/auth.routes';
-import userRoutes from './routes/user.routes';
-import livekitRoutes from './routes/livekit.routes';
-import bookingRoutes from './routes/booking.routes';
-import paymentRoutes from './routes/payment.routes';
-import expertRoutes from './routes/expert.routes';
-import reviewRoutes from './routes/review.routes';
-import notificationRoutes from './routes/notification.routes';
-// ... import other routes ...
-
-// Root/Test routes
-app.get('/', (req: Request, res: Response) => {
-  res.status(200).json({ status: 'success', message: 'Welcome to Star Connect API!'});
+// Rate Limiting
+const limiter = rateLimit({
+  windowMs: config.rate_limit_window_ms, // Use config value
+  max: config.rate_limit_max_requests,  // Use config value
+  message: {
+    status: 'error',
+    message: 'Too many requests from this IP, please try again after a while.',
+  },
+  standardHeaders: true, // Return rate limit info in the \`RateLimit-*\` headers
+  legacyHeaders: false, // Disable the \`X-RateLimit-*\` headers
 });
-app.get('/home', (req: Request, res: Response) => {
-  res.render('index'); // Renders views/index.ejs
-});
+app.use('/api', limiter); // Apply rate limiting to all API routes
 
-// API Routes Versioning
-const apiRouter = express.Router();
-apiRouter.use('/auth', authRoutes);
-apiRouter.use('/users', userRoutes);
-apiRouter.use('/livekit', livekitRoutes);
-apiRouter.use('/bookings', bookingRoutes);
-apiRouter.use('/payments', paymentRoutes);
-apiRouter.use('/experts', expertRoutes); // Routes for expert-specific actions/data
-apiRouter.use('/reviews', reviewRoutes);
-apiRouter.use('/notifications', notificationRoutes);
-// ... use other routes ...
-
-app.use('/api/v1', apiRouter); // Mount all API routes under /api/v1
-
-
-// --- Handle Undefined Routes ---
-// This middleware should be AFTER all your defined routes
-app.all('*', (req: Request, res: Response, next: NextFunction) => {
-    next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
-});
-
-// --- Global Error Handling Middleware ---
-// Must be the LAST middleware defined
-app.use(globalErrorHandler);
-
-
-// --- Server Setup ---
-const PORT = process.env.PORT || 3001; // Use 3001 as default if PORT not in .env
-
-let server: http.Server | https.Server;
-
-// Conditional server creation: HTTPS if cert files exist, otherwise HTTP
-const certDir = path.resolve(process.cwd(), 'cert');
-const certPath = path.join(certDir, 'server.cert');
-const keyPath = path.join(certDir, 'server.key');
-
-try {
-    if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
-        const httpsOptions = {
-            key: fs.readFileSync(keyPath),
-            cert: fs.readFileSync(certPath)
-        };
-        server = https.createServer(httpsOptions, app);
-        console.log("Attempting to start HTTPS server...");
-    } else {
-        console.log("Certificate files ('server.cert', 'server.key') not found in 'cert' directory.");
-        console.log("Starting HTTP server...");
-        server = http.createServer(app);
-    }
-
-    server.listen(PORT, () => {
-        console.log(`
-Server type: ${server instanceof https.Server ? 'HTTPS' : 'HTTP'}`);
-        console.log(`App running on port ${PORT}...`);
-        console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+// --- Standard Middleware ---
+// Request logger (Winston based)
+if (config.env !== 'test') { // Avoid logging during tests if desired
+    app.use((req, res, next) => {
+        requestLogger.info(`${req.method} ${req.originalUrl} IP: ${req.ip}`);
+        next();
     });
-
-} catch (err: any) { // Type err in catch
-     console.error("FATAL: Server startup error:", err);
-     process.exit(1);
 }
 
-// --- Graceful Shutdown Handling ---
-const shutdown = (signal: string) => {
-    console.log(`
-👋 ${signal} RECEIVED. Shutting down gracefully...`);
-    server?.close(() => {
-        console.log('💥 HTTP server closed.');
-        // Now mongoose is defined
-        mongoose.connection.close(false).then(() => { // Mongoose >= 6.9 returns promise
-             console.log(' Mongoose connection closed.');
-             process.exit(0);
-        }).catch((err: Error) => { // <-- TYPED err
-             console.error('Error closing Mongoose connection:', err);
-             process.exit(1);
-        });
+// Body parsers
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+app.use(cookieParser());
+
+// Response compression
+app.use(compression());
+
+// --- View Engine Setup (If using server-side rendering) ---
+app.set('view engine', 'ejs');
+app.set('views', path.resolve(__dirname, '../views')); // Points to views folder in project root
+
+// --- Static Files ---
+// Serve static files from 'public' directory under /static path
+app.use('/static', express.static(path.resolve(__dirname, '../public')));
+// Serve uploads from /uploadFile path (ensure this dir exists)
+// Note: For production, consider using S3/CDN instead of serving uploads directly
+app.use('/uploadFile', express.static(path.resolve(__dirname, '../uploadFile')));
+
+// --- API Documentation (Swagger) ---
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  // swaggerOptions: { persistAuthorization: true },
+  customSiteTitle: `${config.server_name} API Docs`,
+}));
+// Optional: Serve the JSON spec
+app.get('/api-docs-json', (req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
+
+// --- Application Routes ---
+// Root route - Server Monitor Page
+// Store response times in memory (replace with a more robust solution if needed)
+const responseTimes: { route: string; time: number; label: string }[] = [];
+app.use((req: Request, res: Response, next: NextFunction) => {
+    const start = performance.now();
+    res.on('finish', () => {
+        const duration = performance.now() - start;
+        const label = duration >= 1000 ? "High" : duration >= 500 ? "Medium" : "Low";
+        // Avoid logging monitor page requests itself
+        if (req.path !== '/') {
+             responseTimes.push({ route: `${req.method} ${req.originalUrl}`, time: parseFloat(duration.toFixed(2)), label });
+             // Optional: Limit the size of the responseTimes array
+             if (responseTimes.length > 100) responseTimes.shift();
+        }
     });
-     // Force close server after a timeout if graceful shutdown fails
-    setTimeout(() => {
-        console.error('Could not close connections in time, forcefully shutting down');
-        process.exit(1);
-    }, 10000); // 10 seconds timeout
-};
-
-// Handle Unhandled Rejections (e.g., DB connection errors after startup)
-process.on('unhandledRejection', (reason: Error | any, promise: Promise<any>) => {
-    console.error('UNHANDLED REJECTION! 💥 Shutting down...');
-    console.error(reason?.name || 'Error', reason?.message || reason);
-    // Optionally log the stack: console.error(reason.stack);
-    // Graceful shutdown
-    shutdown('unhandledRejection');
-
+    next();
 });
 
-// Handle Uncaught Exceptions
-process.on('uncaughtException', (err: Error) => {
-    console.error('UNCAUGHT EXCEPTION! 💥 Shutting down...');
-    console.error(err.name, err.message);
-    console.error(err.stack);
-    // Graceful shutdown (optional for uncaught exceptions, as state might be corrupt)
-    // Consider just exiting: process.exit(1);
-     shutdown('uncaughtException');
+app.get('/', async (req: Request, res: Response) => {
+    res.send(await serverMonitorPage(req, responseTimes));
+});
+app.get('/home', (req: Request, res: Response) => {
+    res.render('index'); // Renders views/index.ejs
 });
 
+// Mount Main API Router
+app.use('/api/v1', mainApiRouter);
 
-// Handle SIGTERM (e.g., from Heroku, Docker) and SIGINT (Ctrl+C)
-process.on('SIGTERM', () => shutdown('SIGTERM'));
-process.on('SIGINT', () => shutdown('SIGINT'));
+// --- Error Handling ---
+// API Not Found Handler (for /api routes)
+app.use('/api', apiNotFoundHandler);
 
+// Global Error Handler (Must be the LAST middleware)
+app.use(globalErrorHandler);
 
-export default app; // Export app for testing or other purposes
+export default app;

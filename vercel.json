@@ -1,0 +1,45 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "dist/server.js", // Entry point after running 'npm run build'
+      "use": "@vercel/node",
+      "config": {
+         "includeFiles": [
+           "dist/**",        // Include all compiled JS files
+           "node_modules/**", // Include production dependencies
+           "views/**",        // Include EJS templates if used by API
+           "public/**",       // Include static assets if served by API
+           "src/html/**"      // Include email templates
+          // Exclude source maps or dev files if needed to reduce size:
+          // "!dist/**/*.map"
+          ],
+         "maxLambdaSize": "50mb" // Adjust if needed
+      }
+    }
+  ],
+  "routes": [
+    // Serve static files if needed (Vercel handles public dir automatically, but explicit rules can be used)
+    // { "src": "/static/(.*)", "dest": "/public/$1" },
+
+    // Redirect root or specific paths to backend or frontend if desired
+    // { "src": "/", "dest": "/api/v1" }, // Example: Proxy root to API
+    // { "src": "/home", "dest": "/dist/server.js" }, // If /home is handled by EJS
+
+    // Main API route - rewrite all other requests to the serverless function
+    {
+      "src": "/(.*)", // Matches everything
+      "dest": "dist/server.js" // Route to the built server file
+    }
+  ],
+  "env": {
+     // You can define Vercel environment variables here
+     // but it's highly recommended to use the Vercel dashboard
+     // for secrets like MONGODB_URI, JWT_SECRET, API Keys etc.
+     // Example:
+     // "NODE_ENV": "production"
+  },
+   "github": {
+     "silent": true // Suppress automatic comments on PRs
+  }
+}
